@@ -1,0 +1,37 @@
+/* Prueba de movimiento: solo portada, primeros favoritos y Nueva Línea TC.
+   Ningún contenido depende de estas reglas para ser visible o accesible. */
+[data-view="home"] .tc-motion-depth{translate:0 var(--tc-depth,0px)}
+[data-view="home"] .hero.tc-hero-entering::before{
+  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:#000;animation:tc-ignition 950ms cubic-bezier(.18,.7,.24,1) both;
+}
+[data-view="home"] .hero.tc-hero-entering .hero-copy::before{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:linear-gradient(112deg,transparent 40%,#ffffff12 49%,transparent 58%);
+  background-size:250% 100%;opacity:0;
+  animation:tc-light-pass 1000ms 300ms cubic-bezier(.2,.75,.25,1) both;
+}
+#nueva-linea-tc .tc-launch-media.tc-atmosphere-entering{position:relative;isolation:isolate}
+#nueva-linea-tc .tc-launch-media.tc-atmosphere-entering::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(112deg,transparent 40%,#ffffff0c 49%,transparent 58%),radial-gradient(ellipse at 35% 65%,#b9c5d71a,transparent 65%);
+  background-size:240% 100%,100% 100%;opacity:0;
+  animation:tc-atmosphere 1100ms cubic-bezier(.2,.75,.25,1) both;
+}
+@keyframes tc-ignition{from{opacity:1}to{opacity:0}}
+@keyframes tc-light-pass{0%{background-position:150% 0;opacity:0}20%{opacity:.65}75%{opacity:.45}100%{background-position:-50% 0;opacity:0}}
+@keyframes tc-atmosphere{0%{background-position:140% 0,0 0;opacity:0}25%{opacity:.7}70%{opacity:.4}100%{background-position:-40% 0,0 0;opacity:0}}
+@media(hover:hover) and (pointer:fine){
+  #favoritos .favorite-card.tc-motion-hover{transition:translate 220ms ease-out}
+  #favoritos .favorite-card.tc-motion-hover:hover{translate:0 -3px}
+}
+@media(max-width:900px){
+  [data-view="home"] .hero.tc-hero-entering .hero-copy::before{background:linear-gradient(112deg,transparent 40%,#ffffff08 49%,transparent 58%);background-size:250% 100%}
+  #nueva-linea-tc .tc-launch-media.tc-atmosphere-entering::after{background:linear-gradient(112deg,transparent 40%,#ffffff08 49%,transparent 58%);background-size:240% 100%}
+}
+@media(prefers-reduced-motion:reduce){
+  [data-view="home"] .tc-motion-depth,#favoritos .favorite-card.tc-motion-hover{translate:none!important;transition:none!important}
+  [data-view="home"] .hero.tc-hero-entering::before,
+  [data-view="home"] .hero.tc-hero-entering .hero-copy::before,
+  #nueva-linea-tc .tc-launch-media.tc-atmosphere-entering::after{content:none;animation:none}
+}
