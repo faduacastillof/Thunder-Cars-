@@ -68,3 +68,18 @@ body[data-current-view="thunderbike"] #productDialog:not(.baby-dialog){--selecti
  .about-thunder.shared-brand{margin-top:20px;padding-bottom:28px}
 }
 @media(prefers-reduced-motion:reduce){.site-header .desktop-nav a[data-route],.mobile-menu nav a[data-route],#filters button,#brandFilters button,#bikeMoreOptions button,#productDialog .garment-options button,#productDialog .sizes button,#productDialog .gallery-thumbs button{transition:none}}
+
+/* Universo Thunder: fotos completas y contenido integrado, sin marcos de tarjeta. */
+#familia .subbrand-grid{gap:clamp(24px,3.3vw,48px);align-items:center}
+#familia .subbrand-card{min-width:0;column-gap:18px;border:0;background:#000;box-shadow:none}
+#familia .subbrand-card:hover{outline:none}
+#familia .subbrand-card:focus-visible{outline:2px solid var(--selection-accent);outline-offset:6px}
+#familia .subbrand-copy{padding:20px 0}
+@media(max-width:900px){
+ #familia .subbrand-card{column-gap:14px}
+ #familia .subbrand-copy{padding:16px 0}
+}
+@media(max-width:600px){
+ #familia .subbrand-grid{gap:28px}
+ #familia .subbrand-card{column-gap:16px}
+}
