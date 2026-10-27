@@ -10,3 +10,7 @@
 /home / 301!
 /home/* / 301!
 /index.html / 301!
+
+# El enlace de borrador también conduce al dominio oficial.
+https://thundercars-borrador.netlify.app/* https://www.thundercars.cl/:splat 301!
+http://thundercars-borrador.netlify.app/* https://www.thundercars.cl/:splat 301!
