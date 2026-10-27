@@ -5,10 +5,15 @@
 <meta property="og:description" content="ThunderCars Chile: poleras, polerones y accesorios inspirados en autos, drift, JDM, motos y cultura tuerca. Diseños para adultos, niños y bebés, con envíos a todo Chile.">
 <meta property="og:image" content="https://www.thundercars.cl/assets/brand.jpg">
 <script>
-// Limpieza única de enlaces antiguos al cargar. La navegación interna no usa history.
-if (window.location.hash || window.location.search) {
-  window.history.replaceState(null, '', window.location.pathname);
+// Compatibilidad de entradas antiguas, sin interpretarlas como vistas.
+// Los controles de la aplicación nunca generan fragmentos ni llaman a history.
+function cleanLegacyEntry() {
+  if (window.location.hash || window.location.search) {
+    window.history.replaceState(null, '', window.location.pathname);
+  }
 }
+cleanLegacyEntry();
+window.addEventListener('hashchange', cleanLegacyEntry);
 </script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "name": "ThunderCars", "url": "https://www.thundercars.cl/", "logo": "https://www.thundercars.cl/assets/brand.jpg", "sameAs": ["https://www.instagram.com/thundercarscl/", "https://www.tiktok.com/@thundercarscl"], "areaServed": {"@type": "Country", "name": "Chile"}, "contactPoint": {"@type": "ContactPoint", "telephone": "+56993020264", "contactType": "Atención al cliente", "url": "https://wa.me/56993020264", "areaServed": "CL", "availableLanguage": "es"}}</script></head><body>
 <div class="announcement"><span class="announcement-message">PRODUCTOS PARA LOS QUE LLEVAN LOS MOTORES POR DENTRO</span><span class="announcement-shipping">⚡ ENVÍOS A TODO CHILE</span></div>
