@@ -128,7 +128,7 @@ function renderCart(){
  const breakdown=pricing.promotions.length?`<div class="cart-promo-totals"><p>Precio normal de productos <span>${money(pricing.normalTotal)}</span></p><p>Descuento promoción <span>−${money(pricing.discount)}</span></p><p>Subtotal promociones <span>${money(pricing.promotionSubtotal)}</span></p><p>Productos fuera de promoción <span>${money(pricing.nonPromotionSubtotal)}</span></p></div>`:'';
  $('#cartSummary').innerHTML=cart.length?`${breakdown}<div class="total"><span>${pricing.promotions.length?'Total final':'Total productos'}</span><strong>${money(pricing.total)}</strong></div><button type="button" class="checkout" id="checkoutInstagramButton" data-checkout-channel="instagram">FINALIZAR PEDIDO POR INSTAGRAM ↗</button><p class="hint">Envío por coordinar. Copiaremos tu pedido para confirmarlo por Instagram. Este sitio no realiza cobros.</p>`:'';
  if($('#checkoutInstagramButton'))$('#checkoutInstagramButton').onclick=()=>window.tcCheckout?.checkoutInstagram();
- if($('#explore'))$('#explore').onclick=()=>{$('#cartDialog').close();location.hash='catalogo'};
+ if($('#explore'))$('#explore').onclick=()=>{$('#cartDialog').close();window.tcNavigation?.navigate('catalogo')};
 }
 
 $('#cartItems').onclick=e=>{const b=e.target.closest('[data-action]');if(!b)return;let i=Number(b.dataset.index);if(b.dataset.action==='remove')cart.splice(i,1);else if(b.dataset.action==='plus')cart[i].qty=Math.min(20,cart[i].qty+1);else if(cart[i].qty>1)cart[i].qty--;else cart.splice(i,1);save()};$('#cartOpen').onclick=()=>$('#cartDialog').showModal();document.querySelectorAll('dialog .close').forEach(b=>b.onclick=()=>b.closest('dialog').close());document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close()}}));let timer;function toast(t){$('#toast').textContent=t;$('#toast').classList.add('show');clearTimeout(timer);timer=setTimeout(()=>$('#toast').classList.remove('show'),2500)}
@@ -159,4 +159,4 @@ function openBaby(p){
  $('#add').onclick=()=>{const qty=Number($('#qty').value);if(!p.sizes.includes(size)){$('#error').textContent='Selecciona una talla para continuar.';return}const item=cart.find(x=>x.id===p.id&&x.size===size);if(!Number.isInteger(qty)||qty<1||qty>20||(item&&item.qty+qty>20)){$('#error').textContent='Elige entre 1 y 20 unidades por talla.';return}if(item)item.qty+=qty;else cart.push({id:p.id,garment:garmentFor(p),size,color:p.color||'Blanco',front:'Según imagen',qty});save();$('#productDialog').close();toast('Prenda Thunderbaby agregada a tu bolsa')};
  $('#productDialog').scrollTop=0;$('#productDialog').showModal()
 }
-function openSubbrand(value){window.tcNavigation?.navigate(value==='baby'?'#/thunderbaby':'#/thunderbike')}
+function openSubbrand(value){window.tcNavigation?.navigate(value==='baby'?'thunderbaby':'thunderbike')}

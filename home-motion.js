@@ -111,7 +111,7 @@
   }
   window.addEventListener('scroll',scheduleDepth,{passive:true});
   window.addEventListener('resize',() => {clearDepth();scheduleDepth()},{passive:true});
-  window.addEventListener('hashchange',() => {
+  window.addEventListener('tc:viewchange',() => {
     settle();
     if (!home.hidden) inView.forEach(run);
   });

@@ -12,39 +12,27 @@
   const views = ['home','catalogo','marcas','thunderbaby','thunderbike'];
   const slug = value => value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
   const visibleProducts = () => products.filter(p=>!p.isLogo);
-  let ready=false, activeParams=new URLSearchParams(), lastHash='', routeVersion=0;
-  const routeForBrand = value => '#/catalogo?marca='+slug(value);
-  function parseRoute(hash) {
-    const legacy={catalogo:'#/catalogo',familia:'#/?seccion=familia',favoritos:'#/?seccion=favoritos',marca:'#/?seccion=marca',talleres:'#/?seccion=talleres',comunidad:'#/?seccion=comunidad',home:'#/'};
-    let value=hash.replace(/^#/,'');
-    if(legacy[value])value=legacy[value].slice(1);
-    if(!value)value='/';
-    const [path,search='']=value.split('?');
-    const view=path==='/'||path==='/home'?'home':path.replace(/^\//,'').replace(/\/$/,'');
-    return {view:views.includes(view)?view:'home',params:new URLSearchParams(search)};
-  }
-  function navigate(hash) {
-    if(location.hash===hash)applyRoute(true);else location.hash=hash;
-  }
-  function repairLinks() {
-    // A base URL is used by the portable preview for assets, not navigation.
-    document.querySelectorAll('a[href^="#"]').forEach(a=>a.href=location.href.split('#')[0]+a.getAttribute('href'));
+  // Estado en memoria: navegar y filtrar nunca escribe en la URL ni en history.
+  let ready=false, activeParams=new Map(), viewVersion=0;
+  let viewState={view:'home',params:new Map()};
+  function navigate(view='home',params=new Map(),scroll=true) {
+    viewState={view:views.includes(view)?view:'home',params:new Map(params)};
+    applyView(scroll);
   }
   function selectCategory(value) {
-    if(value==='Baby'){navigate('#/thunderbaby');return}
+    if(value==='Baby'){navigate('thunderbaby');return}
     const entry=categories.find(c=>c.value===value);
-    const params=new URLSearchParams(activeParams);
+    const params=new Map(activeParams);
     if(entry&&!['Polera','Polerón'].includes(entry.value))params.delete('marca');
     if(currentView!=='thunderbike')params.delete('buscar');params.delete('destacados');params.delete('todos');
     if(entry)params.set('tipo',entry.key);else{params.delete('tipo');params.set('todos','1')}
-    navigate('#/'+(currentView==='thunderbike'?'thunderbike':'catalogo')+'?'+params);
+    navigate(currentView==='thunderbike'?'thunderbike':'catalogo',params);
   }
   function updateParam(key,value,replace=false) {
-    const params=new URLSearchParams(activeParams);
+    const params=new Map(activeParams);
     if(value)params.set(key,value);else params.delete(key);
     if(currentView==='catalogo'&&!params.has('tipo')&&!params.has('marca')&&!params.has('destacados'))params.set('todos','1');
-    const hash='#/'+currentView+(params.size?'?'+params:'');
-    if(replace){history.replaceState(null,'',hash);applyRoute(false)}else navigate(hash);
+    navigate(currentView,params,!replace);
   }
   function buildLanding() {
     const all=visibleProducts().filter(p=>!isBaby(p));
@@ -53,15 +41,14 @@
       const preferred=c.value==='Polerón'?all.find(p=>p.hoodieImage):c.value==='Polera'?all.find(p=>p.id==='toyota-2-5-SUP-006'):null;
       const p=preferred||list[0];
       const src=c.cover||(p?imageFor(p,c.value==='Polerón'?'Polerón':garmentFor(p)):'');
-      return `<a class="category-card" href="${c.route||'#/catalogo?tipo='+c.key}">${src?`<img${c.cover?` class="category-cover cover-${c.key}"`:''} src="${escapeHtml(src)}" alt="${escapeHtml(c.coverAlt||c.name)}" loading="lazy">`:''}<div><h2>${c.name}</h2><span>${list.length} diseños ↗</span></div></a>`;
+      return `<a class="category-card" href="/" data-view-target="catalogo" data-filter-tipo="${c.key}">${src?`<img${c.cover?` class="category-cover cover-${c.key}"`:''} src="${escapeHtml(src)}" alt="${escapeHtml(c.coverAlt||c.name)}" loading="lazy">`:''}<div><h2>${c.name}</h2><span>${list.length} diseños ↗</span></div></a>`;
     }).join('');
     $('#brandMenu').innerHTML=automotiveBrands().map(b=>{
       const count=all.filter(p=>p.brand===b&&!isAccessory(p)&&!isBaby(p)).length;
-      return `<a class="garage-card" data-garage-brand="${escapeHtml(b)}" href="${routeForBrand(b)}"><h2>${escapeHtml(brandLabel(b))}</h2><span>${count} diseños ↗</span></a>`;
+      return `<a class="garage-card" data-garage-brand="${escapeHtml(b)}" href="/" data-view-target="catalogo" data-filter-marca="${slug(b)}"><h2>${escapeHtml(brandLabel(b))}</h2><span>${count} diseños ↗</span></a>`;
     }).join('');
     document.querySelectorAll('[data-feature-id]').forEach(b=>featuredProductIds.add(b.dataset.featureId));
     document.querySelectorAll('[data-feature]').forEach(b=>{const p=all.find(p=>p.brand==='Rápidos y Furiosos'&&p.name===b.dataset.feature);if(p)featuredProductIds.add(p.id)});
-    repairLinks();
   }
   function syncBrandBar() {
     const bike=currentView==='thunderbike',bar=$('#brandFilters'),available=availableBikeBrands(),scope=bike?'bike:'+available.join('|'):'automotive';
@@ -109,21 +96,18 @@
       b.classList.toggle('active',b.dataset.brand===brand);
       b.setAttribute('aria-pressed',String(b.dataset.brand===brand));
     });
-    repairLinks();
   }
-  function applyRoute(scroll=true) {
+  function applyView(scroll=true) {
     if(!ready)return;
     const previousView=currentView;
-    const route=parseRoute(location.hash),params=route.params;
-    if(route.view==='catalogo'&&params.get('tipo')==='accesorios'){
+    const state=viewState,params=new Map(state.params);
+    if(state.view==='catalogo'&&params.get('tipo')==='accesorios'){
       params.delete('tipo');params.set('marca',slug(accessoriesCatalog));
-      history.replaceState(null,'','#/catalogo?'+params);
     }
-    if(route.view==='catalogo'&&params.get('tipo')==='thunderbaby'){
-      route.view='thunderbaby';params.delete('tipo');
-      history.replaceState(null,'','#/thunderbaby'+(params.size?'?'+params:''));
+    if(state.view==='catalogo'&&params.get('tipo')==='thunderbaby'){
+      state.view='thunderbaby';params.delete('tipo');
     }
-    currentView=route.view;activeParams=params;
+    currentView=state.view;activeParams=params;
     if($('#bikeMoreDialog').open)$('#bikeMoreDialog').close();
     category=categories.find(c=>c.key===params.get('tipo'))?.value||'Todo';
     brand=automotiveBrands().find(b=>slug(b)===params.get('marca'))||'Todo';
@@ -144,21 +128,21 @@
     $('#search').value=params.get('buscar')||'';$('#sort').value=sort;
     render();afterRender();
     document.querySelectorAll('[data-route]').forEach(link=>{const active=link.dataset.route===currentView;link.classList.toggle('active',active);if(active)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current')});
-    document.title=(currentView==='home'?'ThunderCars':({catalogo:'Catálogo',marcas:'El Garage',thunderbaby:'ThunderBaby',thunderbike:'ThunderBike'})[currentView]+' | ThunderCars')+' · Smoke Clothes';
+    // El título y la URL canónica son únicos para todo el sitio.
     if(scroll&&!(previousView==='thunderbike'&&currentView==='thunderbike')){
-      const version=++routeVersion;
+      const version=++viewVersion;
       requestAnimationFrame(()=>{
-        if(version!==routeVersion)return;
+        if(version!==viewVersion)return;
         const section=params.get('seccion');
         const target=currentView==='home'&&['favoritos','familia','talleres','comunidad','marca'].includes(section)?document.getElementById(section):null;
-        if(target){if(target.tagName==='DETAILS')target.open=true;target.scrollIntoView({behavior:'instant',block:'start'})}else window.scrollTo({top:0,behavior:'instant'});
+        if(target){if(target.tagName==='DETAILS')target.open=true;target.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'})}else window.scrollTo({top:0,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
         const heading=currentView==='home'?document.querySelector('.hero h1'):document.querySelector('[data-view]:not([hidden]) h1')||$('#catalogo .section-top h2');
         if(heading){heading.setAttribute('tabindex','-1');heading.focus({preventScroll:true})}
       });
     }
-    lastHash=location.hash;
+    if(previousView!==currentView) window.dispatchEvent(new CustomEvent('tc:viewchange',{detail:{previousView,view:currentView}}));
   }
-  window.tcNavigation={navigate,selectCategory,afterRender,parseRoute};
+  window.tcNavigation={navigate,selectCategory,afterRender};
   function selectBikeBrand(e){const b=e.target.closest('[data-bike-brand]');if(!b||currentView!=='thunderbike')return false;updateParam('marca',b.dataset.bikeBrand==='Todo'?'':slug(b.dataset.bikeBrand));return true}
   const moreDialog=$('#bikeMoreDialog');
   $('#brandFilters').onclick=e=>{
@@ -181,7 +165,7 @@
   $('#filters').onclick=e=>{const b=e.target.closest('[data-cat]');if(!b)return;if(currentView==='thunderbaby')updateParam('prenda',b.dataset.cat==='Todo'?'':b.dataset.cat);else selectCategory(b.dataset.cat)};
   $('#search').oninput=e=>updateParam('buscar',e.target.value,true);
   $('#sort').onchange=e=>updateParam('orden',e.target.value==='default'?'':e.target.value);
-  $('#resetFilters').onclick=()=>navigate(currentView==='catalogo'?'#/catalogo?todos=1':'#/'+currentView);
+  $('#resetFilters').onclick=()=>navigate(currentView,currentView==='catalogo'?new Map([['todos','1']]):new Map());
   $('#garageSearch').oninput=e=>{
     const q=slug(e.target.value);let found=0;
     document.querySelectorAll('[data-garage-brand]').forEach(el=>{el.hidden=!slug(el.dataset.garageBrand).includes(q);if(!el.hidden)found++});
@@ -191,16 +175,18 @@
   toggle.onclick=()=>{menu.showModal();toggle.setAttribute('aria-expanded','true');document.documentElement.classList.add('navigation-open')};
   menu.addEventListener('close',()=>{toggle.setAttribute('aria-expanded','false');document.documentElement.classList.remove('navigation-open');toggle.focus({preventScroll:true})});
   document.addEventListener('click',e=>{
-    const a=e.target.closest('a[href]');if(!a)return;
-    const url=new URL(a.href,location.href);
-    if(url.origin!==location.origin||url.pathname!==location.pathname||!url.hash)return;
+    const a=e.target.closest('a[data-view-target]');if(!a)return;
     if(e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;
-    e.preventDefault();if(menu.open)menu.close();navigate(url.hash);
+    e.preventDefault();if(menu.open)menu.close();
+    const params=new Map();
+    ['tipo','marca','todos','destacados','seccion'].forEach(key=>{
+      const value=a.getAttribute('data-filter-'+key);if(value)params.set(key,value);
+    });
+    navigate(a.dataset.viewTarget,params);
   });
   document.querySelectorAll('#favoritesPrev,#favoritesNext').forEach(b=>b.onclick=()=>{
     const track=document.querySelector('.favorite-grid');track.scrollBy({left:track.clientWidth*(b.id==='favoritesNext'?1:-1),behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
   });
-  window.addEventListener('hashchange',()=>{if(location.hash!==lastHash)applyRoute(true)});
-  function start(){if(ready||!products.length)return;ready=true;buildLanding();applyRoute(true)}
-  window.addEventListener('tc:ready',start);start();repairLinks();
+  function start(){if(ready||!products.length)return;ready=true;buildLanding();applyView(true)}
+  window.addEventListener('tc:ready',start);start();
 })();

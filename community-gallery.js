@@ -80,7 +80,7 @@
   document.addEventListener('visibilitychange', refreshVisibility);
   window.addEventListener('pagehide', () => { visible = false; syncPlayback(); });
   window.addEventListener('pageshow', refreshVisibility);
-  window.addEventListener('hashchange', () => {
+  window.addEventListener('tc:viewchange', () => {
     visible = false;
     syncPlayback();
     requestAnimationFrame(refreshVisibility);

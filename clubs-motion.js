@@ -30,7 +30,7 @@
   },{threshold:.12});
   observer.observe(section);
   function settle(){[...running].forEach(animation=>animation.cancel());}
-  window.addEventListener('hashchange',settle);
+  window.addEventListener('tc:viewchange',settle);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)settle();});
   reduced.addEventListener?.('change',()=>{if(reduced.matches)settle();});
 })();

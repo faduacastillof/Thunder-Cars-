@@ -1,0 +1,12 @@
+# Las secciones antiguas vuelven a la única página pública.
+/catalogo / 301!
+/catalogo/* / 301!
+/marcas / 301!
+/marcas/* / 301!
+/thunderbaby / 301!
+/thunderbaby/* / 301!
+/thunderbike / 301!
+/thunderbike/* / 301!
+/home / 301!
+/home/* / 301!
+/index.html / 301!
